@@ -521,6 +521,11 @@ ClassFunction(stdDisableSysmodules){
 	return &emptyClass;
 }
 
+ClassFunction(stdCleanMac){
+	m_entry_removeMacJunk();
+	return &emptyClass;
+}
+
 #else
 #define STUBBED(name) ClassFunction(name) { return newIntVariablePtr(0); }
 
@@ -543,6 +548,7 @@ STUBBED(stdGetMs)
 STUBBED(stdClear)
 STUBBED(stdFixAttributes)
 STUBBED(stdDisableSysmodules)
+STUBBED(stdCleanMac)
 STUBBED(stdRmDir)
 STUBBED(stdFileExists)
 STUBBED(stdFileDel)
@@ -616,6 +622,7 @@ ClassFunctionTableEntry_t standardFunctionDefenitions[] = {
 	{"is_erista", stdIsErista, 0, 0},
 	{"fixattrib", stdFixAttributes, 0, 0},
 	{"disablemodules", stdDisableSysmodules, 0, 0},
+	{"cleanmac", stdCleanMac, 0, 0},
 
 	// FileSystem
 	// 	Dir

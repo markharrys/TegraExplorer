@@ -177,7 +177,7 @@ p()
 p("Done")
 
 p("* Remove macos related garbage")
-removemacfolders()
+cleanmac()
 p()
 p("Done")
 
@@ -199,7 +199,8 @@ deldir("sd:/switch/kefirupdater/");
 
 # Перезагружаемся в гекату 
 clear()
-p("Update completed!")
+p("Completed! Reinstall kefir!")
+wait(tw = 3000)
 p()
 p("Rebooting")
 wait(tw = 3000)

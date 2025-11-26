@@ -333,6 +333,124 @@ void m_entry_deleteBootFlags()
     }
 }
 
+// Перевірка, чи є файл сміттям macOS
+int _is_macos_junk(const char *name)
+{
+    if (strcmp(name, ".DS_Store") == 0 ||
+        strcmp(name, ".Spotlight-V100") == 0 ||
+        strcmp(name, ".Trashes") == 0 ||
+        strcmp(name, ".Trash") == 0 ||
+        strcmp(name, ".apDisk") == 0 ||
+        strcmp(name, ".VolumeIcon.icns") == 0 ||
+        strcmp(name, ".fseventsd") == 0 ||
+        strcmp(name, ".TemporaryItems") == 0 ||
+        _StartsWith(name, "._")) // Файли ресурсів macOS (._file)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+// Рекурсивна функція видалення (на основі _fix_attributes)
+int _clean_macos_recursive(char *path, u32 *deleted_count, u32 output_y)
+{
+    FRESULT res;
+    DIR dir;
+    u32 dirLength = 0;
+    static FILINFO fno;
+
+    // Відкриваємо директорію
+    res = f_opendir(&dir, path);
+    if (res != FR_OK)
+        return res;
+
+    dirLength = strlen(path);
+    for (;;)
+    {
+        // Очищаємо кінець шляху для нового файлу
+        path[dirLength] = 0;
+
+        // Читаємо елемент
+        res = f_readdir(&dir, &fno);
+
+        // Вихід, якщо помилка або кінець списку
+        if (res != FR_OK || fno.fname[0] == 0)
+            break;
+
+        // Формуємо повний шлях
+        memcpy(&path[dirLength], "/", 1);
+        memcpy(&path[dirLength + 1], fno.fname, strlen(fno.fname) + 1);
+
+        // --- ВІЗУАЛІЗАЦІЯ ---
+        gfx_con_setpos(0, output_y);
+        gfx_printf("Scanning: %-80s", path); 
+        // -------------------
+
+        // Перевіряємо, чи це сміття
+        if (_is_macos_junk(fno.fname))
+        {
+            // Якщо це директорія (наприклад .Trash)
+            if (fno.fattrib & AM_DIR)
+            {
+                // Використовуємо вашу функцію _FolderDelete, вона безпечна для const char*
+                if (!_FolderDelete(path).err) {
+                    *deleted_count = *deleted_count + 1;
+                }
+            }
+            else
+            {
+                // Якщо файл - видаляємо. 
+                // УВАГА: не використовуємо _DeleteFileSimple, бо вона робить free(), 
+                // а path у нас статичний/на стеку.
+                if (f_unlink(path) == FR_OK) {
+                    *deleted_count = *deleted_count + 1;
+                }
+            }
+            
+            // Якщо ми видалили папку/файл, немає сенсу заходити всередину, йдемо далі
+            continue; 
+        }
+
+        // Якщо це звичайна папка - заходимо рекурсивно
+        if (fno.fattrib & AM_DIR)
+        {
+            // Пропускаємо системну папку Nintendo, щоб прискорити процес (опціонально)
+            // if (strcmp(fno.fname, "Nintendo") == 0) continue;
+
+            res = _clean_macos_recursive(path, deleted_count, output_y);
+            if (res != FR_OK)
+                break;
+        }
+    }
+
+    f_closedir(&dir);
+    return res;
+}
+
+void m_entry_removeMacJunk()
+{
+    char path[512]; // Збільшив буфер про всяк випадок
+    u32 deleted = 0;
+
+    if (sd_mount())
+    {
+        // Починаємо з кореня
+        strcpy(path, ""); // FatFs розуміє порожній рядок як корінь, або можна "/"
+
+        gfx_clearscreen();
+        gfx_printf("\n\n-- Cleaning macOS junk files (.DS_Store, ._*, etc)\n");
+        gfx_printf("This keeps your SD card clean and fixes some errors.\n\n");
+
+        u32 x, y;
+        gfx_con_getpos(&x, &y);
+
+        // Запускаємо рекурсію
+        _clean_macos_recursive(path, &deleted, y);
+
+        gfx_printf("\n\n%kDone! Removed %d junk files/folders.%k", 0xFF96FF00, deleted, 0xFFCCCCCC);
+    }
+}
+
 void m_entry_fixAll()
 {
     gfx_clearscreen();
