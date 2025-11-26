@@ -12,7 +12,8 @@ IPL_LOAD_ADDR := 0x40008000
 LPVERSION_MAJOR := 4
 LPVERSION_MINOR := 2
 LPVERSION_BUGFX := 0
-LPVERSION := \"$(LPVERSION_MAJOR).$(LPVERSION_MINOR).$(LPVERSION_BUGFX)\"
+LPVERSION_KEF := $(shell cat /mnt/d/git/dev/_kefir/version)
+LPVERSION := \"$(LPVERSION_MAJOR).$(LPVERSION_MINOR).$(LPVERSION_BUGFX).$(LPVERSION_KEF)\"
 
 ################################################################################
 
@@ -41,7 +42,7 @@ FFCFG_INC := '"../$(SOURCEDIR)/libs/fatfs/ffconf.h"'
 ################################################################################
 
 CUSTOMDEFINES := -DIPL_LOAD_ADDR=$(IPL_LOAD_ADDR)
-CUSTOMDEFINES += -DLP_VER_MJ=$(LPVERSION_MAJOR) -DLP_VER_MN=$(LPVERSION_MINOR) -DLP_VER_BF=$(LPVERSION_BUGFX) -DLP_VER=$(LPVERSION)
+CUSTOMDEFINES += -DLP_VER_MJ=$(LPVERSION_MAJOR) -DLP_VER_MN=$(LPVERSION_MINOR) -DLP_VER_BF=$(LPVERSION_BUGFX) -DLP_VER=$(LPVERSION) -DLP_VER_KEF=$(LPVERSION_KEF)
 CUSTOMDEFINES += -DGFX_INC=$(GFX_INC) -DFFCFG_INC=$(FFCFG_INC)
 
 # 0: UART_A, 1: UART_B.
@@ -57,10 +58,10 @@ LDFLAGS = $(ARCH) -nostartfiles -lgcc -Wl,--nmagic,--gc-sections -Xlinker --defs
 
 .PHONY: all clean
 
-all: $(OUTPUTDIR)/$(TARGET)_small.bin
-	$(eval BIN_SIZE = $(shell wc -c < $(OUTPUTDIR)/$(TARGET).bin))
+all: $(OUTPUTDIR)/$(TARGET).bin
+	$(eval BIN_SIZE = $(shell wc -c < $(OUTPUTDIR)/$(TARGET)_raw.bin))
 	@echo "Payload size is $(BIN_SIZE)"
-	$(eval COMPR_BIN_SIZE = $(shell wc -c < $(OUTPUTDIR)/$(TARGET)_small.bin))
+	$(eval COMPR_BIN_SIZE = $(shell wc -c < $(OUTPUTDIR)/$(TARGET).bin))
 	@echo "Compressed Payload size is $(COMPR_BIN_SIZE)"
 
 	@echo "Max size is 126296 Bytes."
@@ -72,17 +73,18 @@ clean:
 	@rm -rf $(OUTPUTDIR)
 	@rm -rf $(LOADERDIR)/payload_*.h
 
-$(OUTPUTDIR)/$(TARGET)_small.bin: $(OUTPUTDIR)/$(TARGET).bin
+$(OUTPUTDIR)/$(TARGET).bin: $(OUTPUTDIR)/$(TARGET)_raw.bin
 	@$(MAKE) -C $(LZ77DIR)
-	@$(LZ77DIR)/lz77 $(OUTPUTDIR)/$(TARGET).bin
+	@$(LZ77DIR)/lz77 $(OUTPUTDIR)/$(TARGET)_raw.bin
 	@$(MAKE) -C $(BIN2CDIR)
-	@$(BIN2CDIR)/bin2c $(OUTPUTDIR)/$(TARGET).bin.00.lz payload_00 > $(LOADERDIR)/payload_00.h
-	@$(BIN2CDIR)/bin2c $(OUTPUTDIR)/$(TARGET).bin.01.lz payload_01 > $(LOADERDIR)/payload_01.h
-	@rm -rf $(OUTPUTDIR)/$(TARGET).bin.*.lz
+	@$(BIN2CDIR)/bin2c $(OUTPUTDIR)/$(TARGET)_raw.bin.00.lz payload_00 > $(LOADERDIR)/payload_00.h
+	@$(BIN2CDIR)/bin2c $(OUTPUTDIR)/$(TARGET)_raw.bin.01.lz payload_01 > $(LOADERDIR)/payload_01.h
+	@rm -rf $(OUTPUTDIR)/$(TARGET)_raw.bin.*.lz
 
-	$(MAKE) -C $(LOADERDIR) PAYLOAD_NAME=$(TARGET)_small
+	# Передаємо ім'я без суфікса _small
+	$(MAKE) -C $(LOADERDIR) PAYLOAD_NAME=$(TARGET)
 
-$(OUTPUTDIR)/$(TARGET).bin: $(BUILDDIR)/$(TARGET)/$(TARGET).elf
+$(OUTPUTDIR)/$(TARGET)_raw.bin: $(BUILDDIR)/$(TARGET)/$(TARGET).elf
 	@mkdir -p "$(@D)"
 	$(OBJCOPY) -S -O binary $< $@
 
