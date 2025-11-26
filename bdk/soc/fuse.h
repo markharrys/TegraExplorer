@@ -89,6 +89,12 @@ enum
 
 enum
 {
+	HW_MARIKO,
+	HW_ERISTA
+};
+
+enum
+{
 	FUSE_NX_HW_STATE_PROD,
 	FUSE_NX_HW_STATE_DEV
 };
@@ -100,6 +106,7 @@ u32  fuse_read_bootrom_rev();
 u32  fuse_read_dramid(bool raw_id);
 u32  fuse_read_hw_state();
 u32  fuse_read_hw_type();
+bool is_erista();
 int  fuse_set_sbk();
 void fuse_wait_idle();
 int  fuse_read_ipatch(void (*ipatch)(u32 offset, u32 value));

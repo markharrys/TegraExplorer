@@ -27,6 +27,7 @@
 #include <storage/nx_sd.h>
 #include "../storage/emmcfile.h"
 #include <soc/fuse.h>
+#include "../cpr/cpr.h"
 #endif
 // Takes [int, function]. Returns elseable.
 ClassFunction(stdIf) {
@@ -501,6 +502,25 @@ ClassFunction(stdHwType){
 	return newIntVariablePtr(fuse_read_hw_type());
 }
 
+ClassFunction(stdIsErista){
+	return newIntVariablePtr(is_erista());
+}
+
+ClassFunction(stdRebootNormal){
+	power_set_state(POWER_OFF_REBOOT);
+	return &emptyClass;
+}
+
+ClassFunction(stdFixAttributes){
+	m_entry_fixArchiveBit(0);
+	return &emptyClass;
+}
+
+ClassFunction(stdDisableSysmodules){
+	m_entry_deleteBootFlags(0);
+	return &emptyClass;
+}
+
 #else
 #define STUBBED(name) ClassFunction(name) { return newIntVariablePtr(0); }
 
@@ -521,6 +541,8 @@ STUBBED(stdMountEmummc)
 STUBBED(stdHasEmu)
 STUBBED(stdGetMs)
 STUBBED(stdClear)
+STUBBED(stdFixAttributes)
+STUBBED(stdDisableSysmodules)
 STUBBED(stdRmDir)
 STUBBED(stdFileExists)
 STUBBED(stdFileDel)
@@ -538,6 +560,7 @@ STUBBED(stdEmummcFileWrite)
 STUBBED(stdEscPaths)
 STUBBED(stdGetCwd)
 STUBBED(stdPower)
+STUBBED(stdRebootNormal)
 STUBBED(stdSetPrintPos)
 STUBBED(stdSetPixels)
 STUBBED(stdIsPatched)
@@ -590,7 +613,9 @@ ClassFunctionTableEntry_t standardFunctionDefenitions[] = {
 	{"emummcread", stdEmummcFileRead, 2, twoStringArgStd},
 	{"emummcwrite", stdEmummcFileWrite, 2, twoStringArgStd},
 	{"fuse_patched", stdIsPatched, 0, 0},
-	{"fuse_hwtype", stdHwType, 0, 0},
+	{"is_erista", stdIsErista, 0, 0},
+	{"fixattrib", stdFixAttributes, 0, 0},
+	{"disablemodules", stdDisableSysmodules, 0, 0},
 
 	// FileSystem
 	// 	Dir
@@ -610,6 +635,7 @@ ClassFunctionTableEntry_t standardFunctionDefenitions[] = {
 	// 	Utils
 	{"fsexists", stdFileExists, 1, twoStringArgStd},
 	{"payload", stdLaunchPayload, 1, twoStringArgStd},
+	{"reboot_ofw", stdRebootNormal, 0, 0},
 	{"combinepath", stdCombinePaths, VARARGCOUNT, 0},
 	{"escapepath", stdEscPaths, 1, twoStringArgStd},
 };
