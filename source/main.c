@@ -280,22 +280,24 @@ void ipl_main()
 	gfx_clearscreen();
 
 	int res = -1;
-
-	if (btn_read() & BTN_VOL_DOWN || DumpKeys())
-		res = GetKeysFromFile("sd:/switch/prod.keys");
-
+	
+	res = GetKeysFromFile("sd:/switch/prod.keys");
+	
 	TConf.keysDumped = (res > 0) ? 0 : 1;
-
+	
 	if (res > 0)
-		DrawError(newErrCode(TE_ERR_KEYDUMP_FAIL));
+	launch_payload("sd:/switch/kefir-updater/lockpick_auto.bin");
 	
 	if (TConf.keysDumped)
-		SetKeySlots();
+	SetKeySlots();
 	
-	if (res == 0)
-		hidWait();
-
-	if (FileExists("sd:/startup.te"))
+	if (!FileExists("sd:/switch/prod.keys")) launch_payload("sd:/switch/kefir-updater/lockpick_auto.bin");
+	
+	if (FileExists("sd:/kefir/switch/kefir-updater/update.te"))
+		RunScript("sd:/kefir/switch/kefir-updater", newFSEntry("update.te"));
+	else if (FileExists("sd:/switch/kefir-updater/update.te"))
+		RunScript("sd:/switch/kefir-updater", newFSEntry("update.te"));
+	else if (FileExists("sd:/startup.te"))
 		RunScript("sd:/", newFSEntry("startup.te"));
 
 	EnterMainMenu();
