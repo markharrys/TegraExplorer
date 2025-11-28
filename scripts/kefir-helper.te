@@ -21,7 +21,6 @@ if (fsexists("sd:/switch/prod.keys")) {
 	fv()
 }.else(){maj=0}
 
-
 # Удаляем папку с распакованным кефиром
 clear()
 p("* Remove update folder")
@@ -171,15 +170,11 @@ wait(tw = 1000)
 
 # Чиним атрибуты и удаляем маковый мусор
 clear()
-p("* Fix attributes")
-fixattrib()
+p("* Fix attributes and remove macos related garbage")
+fixandclean()
 p()
 p("Done")
-
-p("* Remove macos related garbage")
-cleanmac()
-p()
-p("Done")
+wait(tw = 1000)
 
 p("* Disable sysmodules")
 disablemodules()

@@ -511,18 +511,13 @@ ClassFunction(stdRebootNormal){
 	return &emptyClass;
 }
 
-ClassFunction(stdFixAttributes){
-	m_entry_fixArchiveBit(0);
-	return &emptyClass;
-}
-
 ClassFunction(stdDisableSysmodules){
 	m_entry_deleteBootFlags(0);
 	return &emptyClass;
 }
 
-ClassFunction(stdCleanMac){
-	m_entry_removeMacJunk();
+ClassFunction(stdFixandClean){
+	m_entry_fixAndCleanAll();
 	return &emptyClass;
 }
 
@@ -546,9 +541,8 @@ STUBBED(stdMountEmummc)
 STUBBED(stdHasEmu)
 STUBBED(stdGetMs)
 STUBBED(stdClear)
-STUBBED(stdFixAttributes)
 STUBBED(stdDisableSysmodules)
-STUBBED(stdCleanMac)
+STUBBED(stdFixandClean)
 STUBBED(stdRmDir)
 STUBBED(stdFileExists)
 STUBBED(stdFileDel)
@@ -620,9 +614,8 @@ ClassFunctionTableEntry_t standardFunctionDefenitions[] = {
 	{"emummcwrite", stdEmummcFileWrite, 2, twoStringArgStd},
 	{"fuse_patched", stdIsPatched, 0, 0},
 	{"is_erista", stdIsErista, 0, 0},
-	{"fixattrib", stdFixAttributes, 0, 0},
 	{"disablemodules", stdDisableSysmodules, 0, 0},
-	{"cleanmac", stdCleanMac, 0, 0},
+	{"fixandclean", stdFixandClean, 0, 0},
 
 	// FileSystem
 	// 	Dir

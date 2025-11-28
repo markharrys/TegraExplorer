@@ -46,8 +46,8 @@ enum {
     #else 
     MainExit = 0,
     #endif
-    MainRebootHekate,
     MainReloadTE,
+    MainRebootHekate,
     MainPowerOff,
     MainScripts,
 };
@@ -131,16 +131,12 @@ extern bool sd_mounted;
 extern bool is_sd_inited;
 extern int launch_payload(char *path);
 
-void RebootToAMS(){
-    launch_payload("sd:/atmosphere/reboot_payload.bin");
+void RebootToHekate(){
+    launch_payload("sd:/bootloader/update.bin");
 }
 
 void ReloadTE(){
     launch_payload("sd:/bootloader/payloads/TegraExplorer.bin");
-}
-
-void RebootToHekate(){
-    launch_payload("sd:/bootloader/update.bin");
 }
 
 void MountOrUnmountSD(){
@@ -163,7 +159,7 @@ menuPaths mainMenuPaths[] = {
     #endif
     [MainRebootHekate] = RebootToHekate,
     [MainReloadTE] = ReloadTE,
-    [MainPowerOff] = power_off
+    [MainPowerOff] = power_off,
 };
 
 void EnterMainMenu(){
