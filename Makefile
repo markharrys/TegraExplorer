@@ -121,3 +121,10 @@ else
 	@python3 ts-minifier.py --such-meme -d "$(BUILDDIR)/$(TARGET)/scripts" $(wildcard scripts/*.te)
 	@python3 te2c.py "$(BUILDDIR)/$(TARGET)/script/builtin" "$(BUILDDIR)/$(TARGET)/scripts"
 endif
+
+ftp:
+ifndef IP
+	$(error Please specify the IP address. Usage: make ftp IP=192.168.1.X:port)
+endif
+	@echo "Uploading $(OUTPUTDIR)/$(TARGET).bin to $(IP)..."
+	curl -T $(OUTPUTDIR)/$(TARGET).bin ftp://$(IP)/bootloader/payloads/$(TARGET).bin --create-dirs
