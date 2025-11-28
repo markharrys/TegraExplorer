@@ -15,9 +15,7 @@
 #include "../utils/utils.h"
 #include "../fs/fsutils.h"
 
-#include <sys/types.h>
-// #include <dirent.h>
-// #include <stdio.h>
+// Прибрані конфліктуючі інклуди (<unistd.h>, <sys/types.h>)
 #include <string.h>
 #include <sys/stat.h>
 
@@ -146,6 +144,19 @@ int _traverse_unified(char *path, TraversalStats *stats, u32 hos_folder_mode, u3
         if (res != FR_OK || fno.fname[0] == 0)
             break;
         
+        // --- ВИКЛЮЧЕННЯ ПАПОК ---
+        // Якщо ми знаходимось у корені (довжина шляху 0 або 1 ("/" чи ""))
+        if (dirLength <= 1) 
+        {
+            // Пропускаємо roms та retroarch
+            if (strcmp(fno.fname, "roms") == 0 || 
+                strcmp(fno.fname, "retroarch") == 0)
+            {
+                continue;
+            }
+        }
+        // ------------------------
+
         memcpy(&path[dirLength], "/", 1);
         memcpy(&path[dirLength + 1], fno.fname, strlen(fno.fname) + 1);
 
@@ -210,8 +221,9 @@ void m_entry_fixAndCleanAll()
         strcpy(path, ""); // Root
 
         gfx_clearscreen();
-        gfx_printf("\n\n-- Running Maintenance (Fix Archive Bits + Clean Mac Junk)\n");
-        gfx_printf("Scanning entire SD card...\n\n");
+        gfx_printf("-- Running Maintenance (Fix Archive Bits + Clean Mac Junk)\n");
+        gfx_printf("Scanning entire SD card...\n");
+        gfx_printf("Skipping /roms and /retroarch folders.\n\n");
 
         u32 x, y;
         gfx_con_getpos(&x, &y);
