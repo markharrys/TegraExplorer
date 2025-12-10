@@ -68,6 +68,11 @@ all: $(OUTPUTDIR)/$(TARGET).bin
 	@if [ ${BIN_SIZE} -gt 126296 ]; then echo "\e[1;33mPayload size exceeds limit!\e[0m"; fi
 	@if [ ${COMPR_BIN_SIZE} -gt 126296 ]; then echo "\e[1;33mCompressed Payload size exceeds limit!\e[0m"; fi
 
+	@echo "Copying result to kefir directory..."
+	@mkdir -p ~/dev/_kefir/kefir/bootloader/payloads
+	@cp $(OUTPUTDIR)/$(TARGET).bin ~/dev/_kefir/kefir/bootloader/payloads/$(TARGET).bin
+	@echo "Done! Copied to ~/dev/_kefir/kefir/bootloader/payloads/$(TARGET).bin"
+
 clean:
 	@rm -rf $(BUILDDIR)
 	@rm -rf $(OUTPUTDIR)

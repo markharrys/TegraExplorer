@@ -1,5 +1,4 @@
 #include <utils/util.h>
-// #include "tools.h"
 #include <storage/nx_sd.h>
 #include "../fs/readers/folderReader.h"
 #include "../fs/fstypes.h"
@@ -11,11 +10,10 @@
 #include "../gfx/gfxutils.h"
 #include "../gfx/menu.h"
 #include "../hid/hid.h"
-// #include "utils.h"
 #include "../utils/utils.h"
 #include "../fs/fsutils.h"
 
-// Прибрані конфліктуючі інклуди (<unistd.h>, <sys/types.h>)
+// Безпечні інклуди
 #include <string.h>
 #include <sys/stat.h>
 
@@ -23,6 +21,7 @@
 typedef struct {
     u32 fixed_bits;
     u32 deleted_junk;
+    u32 scanned_count; // Лічильник для оптимізації UI
 } TraversalStats;
 
 void _DeleteFileSimple(char *thing)
@@ -46,8 +45,6 @@ ErrCode_t _FolderDelete(const char *path)
 {
     int res = 0;
     ErrCode_t ret = newErrCode(0);
-    u32 x, y;
-    gfx_con_getpos(&x, &y);
     Vector_t fileVec = ReadFolder(path, &res);
     if (res)
     {
@@ -102,22 +99,22 @@ int _is_macos_junk(const char *name)
         strcmp(name, ".VolumeIcon.icns") == 0 ||
         strcmp(name, ".fseventsd") == 0 ||
         strcmp(name, ".TemporaryItems") == 0 ||
-        _StartsWith(name, "._")) // Файли ресурсів macOS (._file)
+        _StartsWith(name, "._")) 
     {
         return 1;
     }
     return 0;
 }
 
-// УНІВЕРСАЛЬНА функція обходу (завжди робить все)
-int _traverse_unified(char *path, TraversalStats *stats, u32 hos_folder_mode, u32 check_first_run, u32 output_y)
+// УНІВЕРСАЛЬНА функція обходу
+int _traverse_unified(char *path, TraversalStats *stats, u32 check_first_run, u32 output_y)
 {
     FRESULT res;
     DIR dir;
     u32 dirLength = 0;
-    static FILINFO fno;
+    FILINFO fno; 
 
-    // Перевірка кореневого елемента
+    // Перевірка кореневого елемента (тільки при першому запуску)
     if (check_first_run)
     {
         res = f_stat(path, &fno);
@@ -139,69 +136,86 @@ int _traverse_unified(char *path, TraversalStats *stats, u32 hos_folder_mode, u3
     for (;;)
     {
         path[dirLength] = 0; // Clear end
-        res = f_readdir(&dir, &fno);
 
+        res = f_readdir(&dir, &fno);
         if (res != FR_OK || fno.fname[0] == 0)
             break;
         
+        // --- ПРОПУСК . та .. (КРИТИЧНО) ---
+        if (strcmp(fno.fname, ".") == 0 || strcmp(fno.fname, "..") == 0)
+            continue;
+        // ----------------------------------
+
         // --- ВИКЛЮЧЕННЯ ПАПОК ---
-        // Якщо ми знаходимось у корені (довжина шляху 0 або 1 ("/" чи ""))
         if (dirLength <= 1) 
         {
-            // Пропускаємо roms та retroarch
             if (strcmp(fno.fname, "roms") == 0 || 
                 strcmp(fno.fname, "retroarch") == 0)
             {
                 continue;
             }
         }
-        // ------------------------
 
+        // Будуємо повний шлях
         memcpy(&path[dirLength], "/", 1);
         memcpy(&path[dirLength + 1], fno.fname, strlen(fno.fname) + 1);
 
-        // --- ВІЗУАЛІЗАЦІЯ ---
-        gfx_con_setpos(0, output_y);
-        gfx_printf("Scan: %s                                                  ", path); 
-        // -------------------
+        // --- ВІЗУАЛІЗАЦІЯ (СУПЕР ОПТИМІЗОВАНА) ---
+        stats->scanned_count++;
+        // Оновлюємо екран тільки кожен 500-й файл!
+        if (stats->scanned_count % 500 == 0) {
+            gfx_con_setpos(0, output_y);
+            // Просто виводимо лічильник, це дуже швидко
+            gfx_printf("Files scanned: %d                           ", stats->scanned_count); 
+        }
+        // -----------------------------------------
 
-        // 1. ВИДАЛЕННЯ СМІТТЯ (Безумовне)
+        // 1. ВИДАЛЕННЯ СМІТТЯ
         if (_is_macos_junk(fno.fname))
         {
             if (fno.fattrib & AM_DIR)
             {
-                if (!_FolderDelete(path).err) {
-                    stats->deleted_junk++;
-                }
+                if (!_FolderDelete(path).err) stats->deleted_junk++;
             }
             else
             {
-                if (f_unlink(path) == FR_OK) {
-                    stats->deleted_junk++;
-                }
+                if (f_unlink(path) == FR_OK) stats->deleted_junk++;
             }
-            continue; // Видалили - йдемо далі
+            continue; 
         }
 
-        // 2. ФІКС АТРИБУТІВ (Безумовний)
-        if (fno.fattrib & AM_ARC)
+        // 2. ЛОГІКА АТРИБУТІВ
+        int should_have_bit = 0;
+
+        // Перевіряємо, чи це папка .nca
+        if (fno.fattrib & AM_DIR) {
+            size_t len = strlen(fno.fname);
+            if (len > 4 && strcmp(&fno.fname[len - 4], ".nca") == 0) {
+                should_have_bit = 1;
+            }
+        }
+
+        if (should_have_bit) 
         {
-            stats->fixed_bits++;
-            f_chmod(path, 0, AM_ARC);
+            // .nca папка -> Біт МАЄ бути (SET)
+            if (!(fno.fattrib & AM_ARC)) {
+                stats->fixed_bits++;
+                f_chmod(path, AM_ARC, AM_ARC);
+            }
+        } 
+        else 
+        {
+            // Звичайний файл/папка -> Біта НЕ МАЄ бути (UNSET)
+            if (fno.fattrib & AM_ARC) {
+                stats->fixed_bits++;
+                f_chmod(path, 0, AM_ARC);
+            }
         }
 
         // 3. РЕКУРСІЯ
         if (fno.fattrib & AM_DIR)
         {
-            // Спеціальна логіка для .nca файлів (потребує архівного біта)
-            if (hos_folder_mode && !strcmp(fno.fname + strlen(fno.fname) - 4, ".nca"))
-            {
-                stats->fixed_bits++;
-                f_chmod(path, AM_ARC, AM_ARC);
-            }
-
-            // Йдемо в глибину
-            res = _traverse_unified(path, stats, 0, 0, output_y);
+            res = _traverse_unified(path, stats, 0, output_y);
             if (res != FR_OK)
                 break;
         }
@@ -228,8 +242,7 @@ void m_entry_fixAndCleanAll()
         u32 x, y;
         gfx_con_getpos(&x, &y);
 
-        // hos_folder_mode = 1 (вмикає правильну обробку .nca файлів, якщо вони трапляться)
-        _traverse_unified(path, &stats, 1, 1, y);
+        _traverse_unified(path, &stats, 1, y);
 
         gfx_printf("\n\n%kDone!\nFixed attributes: %d\nRemoved junk files: %d%k", 
             0xFF96FF00, stats.fixed_bits, stats.deleted_junk, 0xFFCCCCCC);
@@ -285,4 +298,13 @@ void m_entry_deleteBootFlags()
             free(flagPath);
         }
     }
+}
+
+void m_entry_fixAll()
+{
+    gfx_clearscreen();
+    m_entry_deleteBootFlags();
+    m_entry_deleteInstalledThemes();
+    usleep(1000000); 
+    m_entry_fixAndCleanAll();
 }
