@@ -19,76 +19,12 @@ if(r==2){
 if(mount("SYSTEM")){p("Mount failed!")pe()}
 clear()
 
-border = {
-	setpixels(0,0,1279,19,border_color)
-	setpixels(0,700,1279,719,border_color)
-	setpixels(0,20,19,699,border_color)
-	setpixels(1260,20,1279,699,border_color)
-}
-
-i = 10
-x_pos = 10
-y_pos = 12
-
-["WARNING!!!", 
-	"", 
-	"Do you really want to wipe your system?", 
-	"This will remove:", 
-	"- Your Save Data", 
-	"- Your Game Data", 
-	"- Your User Data", 
-	"",
-	"Restoring an emmc backup is always preferable over wiping.",
-	"Please only use this as a last resort.",
-	"This script is intended to be used in aid of unbricking."
-].foreach("line") 
-{
-	printpos(x_pos, y_pos)
-	y_pos = y_pos + 1
-	print(line)
-}
-
-if (!fsexists("bis:/save/"+is[1]))
-{
-	[
-		"",
-		"DeviceSettings save (8000000000000053) is missing!!!",
-		"This script cannot recover lost battery calibration data.",
-		"The system will initialize with default values.",
-		"These values are unsafe for lite systems!"
-	].foreach("line") 
-	{
-		printpos(x_pos, y_pos)
-		y_pos = y_pos + 1
-		print(line)
-	}
-}
-
-time = 5000
-y_pos = y_pos + 4
-
-while (i > 0)
-{
-	i = i - 1
-	
-	if (i % 2 == 0){
-		border_color = 0xFF0000
-	}.else() {
-		border_color = 0x000000
-	}
-	
-	border()
-	sleep(500)
-	time = time - 500
-	printpos(x_pos, y_pos)
-	print("Waiting for", time / 1000, "seconds")
-}
-
-printpos(x_pos, y_pos)
-print("Ready to wipe", selected_target, "           ")
-y_pos = y_pos + 1
-printpos(x_pos, y_pos)
-print("Press the power button to wipe, any other key to exit")
+color(0xFFFF00)
+p("WARNING: This will modify your SYSTEM partition!")
+p("Ready to wipe", selected_target)
+p()
+color(0xFFFFFF)
+p("Press the power button to wipe, any other key to exit")
 
 result = pause(0x70F000F)
 

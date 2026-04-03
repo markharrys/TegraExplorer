@@ -291,7 +291,7 @@ void ipl_main()
 	if (TConf.keysDumped)
 	SetKeySlots();
 	
-	if (!FileExists("sd:/switch/prod.keys")) launch_payload("sd:/switch/kefir-updater/lockpick_auto.bin");
+	if (!FileExists("sd:/switch/prod.keys") && FileExists("sd:/switch/kefir-updater/lockpick_auto.bin")) launch_payload("sd:/switch/kefir-updater/lockpick_auto.bin");
 	
 	if (FileExists("sd:/kefir/switch/kefir-updater/update.te"))
 		RunScript("sd:/kefir/switch/kefir-updater", newFSEntry("update.te"));

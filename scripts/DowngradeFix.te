@@ -11,13 +11,6 @@ fatal = {
     exit()
 }
 
-wait = {
-    t = timer()
-    while (timer() < (t + tw)) {
-        print("Wait for ", ((t + tw - timer()) / 1000), " seconds \r")
-    }
-}
-
 downgradeFix = {
     color(0x00FF00)
     p("Starting Downgrade Fix...")
@@ -91,7 +84,6 @@ p("Make sure you know what you doing before proceeding!")
 p()
 color(0xFFFFFF)
 
-wait(tw = 5000)
 p("Press POWER to continue, any other key to exit")
 if (!pause().power) {
     exit()
