@@ -20,6 +20,9 @@ typedef struct {
     u32 start_time;
     u32 aborted;
     u32 output_y;
+    char* skip_list_buf;
+    char* skip_paths[32];
+    int skip_paths_count;
 } TraversalStats;
 
 
@@ -135,9 +138,14 @@ int _traverse_unified(char *path, TraversalStats *stats, u32 check_first_run)
 
         if (fno.fattrib & AM_DIR) 
         {
-            if (strcmp(fno.fname, "roms") == 0 || 
-                strcmp(fno.fname, "retroarch") == 0)
-                continue;
+            int should_skip = 0;
+            for (int i = 0; i < stats->skip_paths_count; i++) {
+                if (strcmp(fno.fname, stats->skip_paths[i]) == 0) {
+                    should_skip = 1;
+                    break;
+                }
+            }
+            if (should_skip) continue;
         }
 
         memcpy(&path[dirLength], "/", 1);
@@ -216,15 +224,54 @@ void m_entry_fixAndCleanAll()
     char path[512];
     TraversalStats stats = {0};
 
+    // Default skip paths (used if /config/.skip is not present)
+    stats.skip_paths[0] = "roms";
+    stats.skip_paths[1] = "retroarch";
+    stats.skip_paths[2] = "tico";
+    stats.skip_paths_count = 3;
+
     if (sd_mount())
     {
+        // Try to load custom skip list from SD
+        FIL fp;
+        if (f_open(&fp, "sd:/config/.skip", FA_READ) == FR_OK) {
+            u32 file_size = f_size(&fp);
+            if (file_size > 0 && file_size < 4096) {
+                stats.skip_list_buf = malloc(file_size + 1);
+                if (stats.skip_list_buf) {
+                    u32 br;
+                    f_read(&fp, stats.skip_list_buf, file_size, &br);
+                    stats.skip_list_buf[br] = 0;
+
+                    stats.skip_paths_count = 0;
+                    char* line = strtok(stats.skip_list_buf, "\r\n");
+                    while (line && stats.skip_paths_count < 32) {
+                        if (line[0] != 0 && line[0] != '#') {
+                            stats.skip_paths[stats.skip_paths_count++] = line;
+                        }
+                        line = strtok(NULL, "\r\n");
+                    }
+                }
+            }
+            f_close(&fp);
+        }
+
         stats.start_time = get_tmr_s();
         strcpy(path, ""); // Root
 
         gfx_clearscreen();
         gfx_printf("-- Running Maintenance (Fix Archive Bits + Clean Mac Junk)\n");
         gfx_printf("Scanning entire SD card...\n");
-        gfx_printf("Skipping roms and retroarch folders.\n\n");
+
+        if (stats.skip_list_buf) {
+            gfx_printf("Skipping folders from /config/.skip:\n");
+            for (int i = 0; i < stats.skip_paths_count; i++) {
+                gfx_printf(" - %s\n", stats.skip_paths[i]);
+            }
+            gfx_printf("\n");
+        } else {
+            gfx_printf("Skipping roms, retroarch and tico folders.\n\n");
+        }
 
         u32 x, y;
         gfx_con_getpos(&x, &y);
@@ -237,8 +284,12 @@ void m_entry_fixAndCleanAll()
             gfx_printf("\n\n%kOperation aborted! Time limit (15 mins) reached.%k", 0xFF0000FF, 0xFFCCCCCC);
         }
 
-        gfx_printf("\n\n%kDone!\nFixed attributes: %d\nRemoved junk files: %d%k", 
+        gfx_printf("\n\n%kDone!\nFixed attributes: %d\nRemoved junk files: %d%k",
             0xFF96FF00, stats.fixed_bits, stats.deleted_junk, 0xFFCCCCCC);
+
+        if (stats.skip_list_buf) {
+            free(stats.skip_list_buf);
+        }
     }
 }
 
