@@ -243,7 +243,7 @@ void m_entry_fixAndCleanAll()
                     f_read(&fp, stats.skip_list_buf, file_size, &br);
                     stats.skip_list_buf[br] = 0;
 
-                    stats.skip_paths_count = 0;
+                    // Append to existing defaults, not replace them
                     char* line = strtok(stats.skip_list_buf, "\r\n");
                     while (line && stats.skip_paths_count < 32) {
                         if (line[0] != 0 && line[0] != '#') {
@@ -263,15 +263,11 @@ void m_entry_fixAndCleanAll()
         gfx_printf("-- Running Maintenance (Fix Archive Bits + Clean Mac Junk)\n");
         gfx_printf("Scanning entire SD card...\n");
 
-        if (stats.skip_list_buf) {
-            gfx_printf("Skipping folders from /config/.skip:\n");
-            for (int i = 0; i < stats.skip_paths_count; i++) {
-                gfx_printf(" - %s\n", stats.skip_paths[i]);
-            }
-            gfx_printf("\n");
-        } else {
-            gfx_printf("Skipping roms, retroarch and tico folders.\n\n");
+        gfx_printf("Skipping %d folder(s):\n", stats.skip_paths_count);
+        for (int i = 0; i < stats.skip_paths_count; i++) {
+            gfx_printf(" - %s\n", stats.skip_paths[i]);
         }
+        gfx_printf("\n");
 
         u32 x, y;
         gfx_con_getpos(&x, &y);
