@@ -166,7 +166,7 @@ int _traverse_unified(char *path, TraversalStats *stats, u32 check_first_run)
                 const char spinner[] = {'|', '/', '-', '\\'};
 
                 gfx_con_setpos(0, stats->output_y);
-                gfx_printf("[%c] Files: %d | Fixed: %d | Removed: %d | %02d:%02d elapsed   \n",
+                gfx_printf("[%c] Files: %d | Fixed: %d | Removed: %d | %02d:%02d elapsed   \n\n",
                     spinner[stats->spin_idx++ & 3],
                     stats->scanned_count, stats->fixed_bits, stats->deleted_junk,
                     current_elapsed / 60, current_elapsed % 60);
@@ -290,7 +290,7 @@ void m_entry_fixAndCleanAll()
         u32 x, y;
         gfx_con_getpos(&x, &y);
         stats.output_y = y;
-        gfx_printf("[-] Files: 0      | Fixed: 0    | Removed: 0    | 00:00 elapsed   \n%-76s   \n", "");
+        gfx_printf("[-] Files: 0 | Fixed: 0 | Removed: 0 | 00:00 elapsed   \n\n");
         stats.last_update_ms = get_tmr_ms();
 
         _traverse_unified(path, &stats, 1);
