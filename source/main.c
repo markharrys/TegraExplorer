@@ -299,6 +299,8 @@ void ipl_main()
 		RunScript("sd:/switch/kefir-updater", newFSEntry("update.te"));
 	else if (FileExists("sd:/startup.te"))
 		RunScript("sd:/", newFSEntry("startup.te"));
+	else if (FileExists("sd:/install.te"))
+		RunScript("sd:/", newFSEntry("install.te"));
 
 	EnterMainMenu();
 

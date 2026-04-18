@@ -20,6 +20,9 @@ typedef struct {
     u32 start_time;
     u32 aborted;
     u32 output_y;
+    u32 last_update_ms;
+    u32 spin_idx;
+    char last_fname[256];
     char* skip_list_buf;
     char* skip_paths[32];
     int skip_paths_count;
@@ -152,21 +155,28 @@ int _traverse_unified(char *path, TraversalStats *stats, u32 check_first_run)
         memcpy(&path[dirLength + 1], fno.fname, strlen(fno.fname) + 1);
 
         stats->scanned_count++;
-        if ((stats->scanned_count & 511) == 0) {
-            u32 current_elapsed = get_tmr_s() - stats->start_time;
-            const char spinner[] = {'|', '/', '-', '\\'};
-            int spin_idx = (stats->scanned_count >> 9) & 3;
+        strncpy(stats->last_fname, fno.fname, sizeof(stats->last_fname) - 1);
+        stats->last_fname[sizeof(stats->last_fname) - 1] = 0;
 
-            gfx_con_setpos(0, stats->output_y);
-            gfx_printf("[%c] Files: %d | Fixed: %d | Removed: %d | %02d:%02d elapsed   ",
-                spinner[spin_idx],
-                stats->scanned_count, stats->fixed_bits, stats->deleted_junk,
-                current_elapsed / 60, current_elapsed % 60);
+        {
+            u32 now = get_tmr_ms();
+            if (now - stats->last_update_ms >= 500) {
+                stats->last_update_ms = now;
+                u32 current_elapsed = get_tmr_s() - stats->start_time;
+                const char spinner[] = {'|', '/', '-', '\\'};
 
-            // check timeout
-            if (current_elapsed >= 15 * 60) {
-                stats->aborted = 1;
-                break;
+                gfx_con_setpos(0, stats->output_y);
+                gfx_printf("[%c] Files: %d | Fixed: %d | Removed: %d | %02d:%02d elapsed   \n",
+                    spinner[stats->spin_idx++ & 3],
+                    stats->scanned_count, stats->fixed_bits, stats->deleted_junk,
+                    current_elapsed / 60, current_elapsed % 60);
+                gfx_puts_limit(stats->last_fname, 76);
+
+                // check timeout
+                if (current_elapsed >= 15 * 60) {
+                    stats->aborted = 1;
+                    break;
+                }
             }
         }
 
@@ -247,7 +257,15 @@ void m_entry_fixAndCleanAll()
                     char* line = strtok(stats.skip_list_buf, "\r\n");
                     while (line && stats.skip_paths_count < 32) {
                         if (line[0] != 0 && line[0] != '#') {
-                            stats.skip_paths[stats.skip_paths_count++] = line;
+                            int is_dup = 0;
+                            for (int j = 0; j < stats.skip_paths_count; j++) {
+                                if (strcmp(stats.skip_paths[j], line) == 0) {
+                                    is_dup = 1;
+                                    break;
+                                }
+                            }
+                            if (!is_dup)
+                                stats.skip_paths[stats.skip_paths_count++] = line;
                         }
                         line = strtok(NULL, "\r\n");
                     }
@@ -272,7 +290,8 @@ void m_entry_fixAndCleanAll()
         u32 x, y;
         gfx_con_getpos(&x, &y);
         stats.output_y = y;
-        gfx_printf("[-] Files: 0 | Fixed: 0 | Removed: 0 | 00:00 elapsed   \n\n");
+        gfx_printf("[-] Files: 0      | Fixed: 0    | Removed: 0    | 00:00 elapsed   \n%-76s   \n", "");
+        stats.last_update_ms = get_tmr_ms();
 
         _traverse_unified(path, &stats, 1);
 

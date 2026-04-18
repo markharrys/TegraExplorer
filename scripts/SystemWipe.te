@@ -4,6 +4,24 @@ p=println
 pr=print
 pe={pause() exit()}
 p("System wiper\n")
+
+# Spinner setup
+s_chars = ["|", "/", "-", "\\"]
+s_idx = 0
+s_last = timer()
+upd_s = {
+	if (timer() - s_last > 100) {
+		s_last = timer()
+		# Spinner in top-right corner
+		printpos(77, 0)
+		# Save current color? stdColor returns empty, so we can't.
+		# Just set White for spinner and assume we want Red back for the rest of this task.
+		color(0xFFFFFF)
+		pr(s_chars[s_idx])
+		s_idx = (s_idx + 1) % 4
+		color(0xFF0000)
+	}
+}
 op=["Exit","Wipe sysmmc"].copy()
 if (emu()){op+"Wipe emummc"}
 r=menu(op,0)clear()
@@ -38,7 +56,7 @@ color(0xFF0000)
 pr("Deleting system saves... ")
 f=readdir("bis:/save")
 if(f.folders.len()!=0){p("Folders in save dir???")pe()}
-f.files.foreach("x"){if(!is.contains(x)){if(delfile("bis:/save/"+x)){p("File deletion failed: ", x)pe()}}}
+f.files.foreach("x"){upd_s()if(!is.contains(x)){if(delfile("bis:/save/"+x)){p("File deletion failed: ", x)pe()}}}
 pr("Done!\nSetting up indexer save...")
 
 if(fsexists("bis:/save/"+is[0]))
@@ -145,6 +163,6 @@ if(fsexists("bis:/save/"+is[0]))
 
 pr("\nDeleting user dirs...")ud=["Album","Contents","save","saveMeta","temp"]
 if(mount("USER")){p("Mount failed!")pe()}
-ud.foreach("x"){pr("\n"+x,"")if(deldir("bis:/"+x)){p("Dir deletion failed")pe()}mkdir("bis:/"+x)}
+ud.foreach("x"){upd_s()pr("\n"+x,"")if(deldir("bis:/"+x)){p("Dir deletion failed")pe()}mkdir("bis:/"+x)}
 mkdir("bis:/Contents/placehld")mkdir("bis:/Contents/registered")
 color(0x00FF00)p("\n\nDone!")pause()
