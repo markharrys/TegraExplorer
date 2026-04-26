@@ -166,11 +166,23 @@ int _traverse_unified(char *path, TraversalStats *stats, u32 check_first_run)
                 const char spinner[] = {'|', '/', '-', '\\'};
 
                 gfx_con_setpos(0, stats->output_y);
-                gfx_printf("[%c] Files: %d | Fixed: %d | Removed: %d | %02d:%02d elapsed   \n\n",
+                gfx_printf("[%c] Files: %d | Fixed: %d | Removed: %d | %02d:%02d elapsed   \n",
                     spinner[stats->spin_idx++ & 3],
                     stats->scanned_count, stats->fixed_bits, stats->deleted_junk,
                     current_elapsed / 60, current_elapsed % 60);
-                gfx_puts_limit(stats->last_fname, 76);
+                {
+                    char fname_line[77];
+                    u32 flen = strlen(stats->last_fname);
+                    if (flen >= 76) {
+                        memcpy(fname_line, stats->last_fname, 73);
+                        fname_line[73] = '.'; fname_line[74] = '.'; fname_line[75] = '.';
+                    } else {
+                        memcpy(fname_line, stats->last_fname, flen);
+                        memset(fname_line + flen, ' ', 76 - flen);
+                    }
+                    fname_line[76] = 0;
+                    gfx_puts(fname_line);
+                }
 
                 // check timeout
                 if (current_elapsed >= 15 * 60) {
