@@ -427,6 +427,10 @@ ClassFunction(stdFileWrite){
 	return newIntVariablePtr(sd_save_to_file(args[1]->solvedArray.vector.data, args[1]->solvedArray.vector.count, args[0]->string.value));	
 }
 
+ClassFunction(stdFileWriteStr){
+	return newIntVariablePtr(sd_save_to_file(args[1]->string.value, strlen(args[1]->string.value), args[0]->string.value));	
+}
+
 extern int launch_payload(char *path);
 
 ClassFunction(stdLaunchPayload){
@@ -550,6 +554,7 @@ STUBBED(stdCopyDir)
 STUBBED(stdFileMove)
 STUBBED(stdLaunchPayload)
 STUBBED(stdFileWrite)
+STUBBED(stdFileWriteStr)
 STUBBED(stdFileRead)
 STUBBED(stdFileReadSize)
 STUBBED(stdCombinePaths)
@@ -631,6 +636,7 @@ ClassFunctionTableEntry_t standardFunctionDefenitions[] = {
 	{"readfile", stdFileRead, 1, twoStringArgStd},
 	{"getfilesize", stdFileReadSize, 1, twoStringArgStd},
 	{"writefile", stdFileWrite, 2, oneStringOneByteArrayStd},
+	{"writestr", stdFileWriteStr, 2, twoStringArgStd},
 	
 	// 	Utils
 	{"fsexists", stdFileExists, 1, twoStringArgStd},
