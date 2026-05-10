@@ -8,6 +8,7 @@
 #include "../gfx/gfxutils.h"
 #include "fsutils.h"
 #include "readers/folderReader.h"
+#include <utils/util.h>
 
 ErrCode_t FileCopy(const char *locin, const char *locout, u8 options){
     FIL in, out;
@@ -106,6 +107,7 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
     ErrCode_t ret = newErrCode(0);
     u32 x, y;
     gfx_con_getpos(&x, &y);
+    u32 last_update_ms = 0;
 
     Vector_t fileVec = ReadFolder(locin, &res);
     if (res){
@@ -114,33 +116,47 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
     else {
         vecDefArray(FSEntry_t *, fs, fileVec);
         f_mkdir(dstPath);
-        
+
         for (int i = 0; i < fileVec.count && !ret.err; i++){
             char *temp = CombinePaths(locin, fs[i].name);
             if (fs[i].isDir){
                 ret = FolderCopy(temp, dstPath);
             }
             else {
-                gfx_puts_limit(fs[i].name, (YLEFT - x) / 16 - 10);
-                BoxRestOfScreen();
+                u32 now = get_tmr_ms();
+                if (now - last_update_ms >= 256) {
+                    last_update_ms = now;
+                    gfx_con_setpos(x, y);
+
+                    char fname_line[77];
+                    u32 flen = strlen(fs[i].name);
+                    if (flen >= 76) {
+                        memcpy(fname_line, fs[i].name, 73);
+                        fname_line[73] = '.'; fname_line[74] = '.'; fname_line[75] = '.';
+                    } else {
+                        memcpy(fname_line, fs[i].name, flen);
+                        memset(fname_line + flen, ' ', 76 - flen);
+                    }
+                    fname_line[76] = 0;
+                    gfx_puts(fname_line);
+                    gfx_con_setpos(x, y);
+                }
 
                 char *tempDst = CombinePaths(dstPath, fs[i].name);
                 ret = FileCopy(temp, tempDst, COPY_MODE_PRINT);
                 free(tempDst);
-
-                gfx_con_setpos(x, y);
             }
             free(temp);
         }
     }
 
     FILINFO fno;
-    
+
     if (!ret.err){
         res = f_stat(locin, &fno);
         if (res)
             ret = newErrCode(res);
-        else 
+        else
             ret = newErrCode(f_chmod(dstPath, fno.fattrib, 0x3A));
     }
 
@@ -154,6 +170,7 @@ ErrCode_t FolderDelete(const char *path){
     ErrCode_t ret = newErrCode(0);
     u32 x, y;
     gfx_con_getpos(&x, &y);
+    u32 last_update_ms = 0;
 
     Vector_t fileVec = ReadFolder(path, &res);
     if (res){
@@ -168,13 +185,29 @@ ErrCode_t FolderDelete(const char *path){
                 ret = FolderDelete(temp);
             }
             else {
-                gfx_puts_limit(fs[i].name, (YLEFT - x) / 16 - 10);
-                BoxRestOfScreen();
+                u32 now = get_tmr_ms();
+                if (now - last_update_ms >= 256) {
+                    last_update_ms = now;
+                    gfx_con_setpos(x, y);
+
+                    char fname_line[77];
+                    u32 flen = strlen(fs[i].name);
+                    if (flen >= 76) {
+                        memcpy(fname_line, fs[i].name, 73);
+                        fname_line[73] = '.'; fname_line[74] = '.'; fname_line[75] = '.';
+                    } else {
+                        memcpy(fname_line, fs[i].name, flen);
+                        memset(fname_line + flen, ' ', 76 - flen);
+                    }
+                    fname_line[76] = 0;
+                    gfx_puts(fname_line);
+                    gfx_con_setpos(x, y);
+                }
+
                 res = f_unlink(temp);
                 if (res){
                     ret = newErrCode(res);
                 }
-                gfx_con_setpos(x, y);   
             }
             free(temp);
         }

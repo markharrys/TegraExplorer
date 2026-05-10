@@ -285,13 +285,20 @@ void ipl_main()
 	
 	TConf.keysDumped = (res > 0) ? 0 : 1;
 	
-	if (res > 0)
-	launch_payload("sd:/switch/kefir-updater/lockpick_auto.bin");
+	if (res > 0) {
+		const char *target = "sd:/bootloader/payloads/TegraExplorer.bin";
+		sd_save_to_file((void*)target, strlen(target), "sd:/config/autokeys_target.txt");
+		launch_payload("sd:/bootloader/payloads/Lockpick_RCM.bin");
+	}
 	
 	if (TConf.keysDumped)
 	SetKeySlots();
 	
-	if (!FileExists("sd:/switch/prod.keys") && FileExists("sd:/switch/kefir-updater/lockpick_auto.bin")) launch_payload("sd:/switch/kefir-updater/lockpick_auto.bin");
+	if (!FileExists("sd:/switch/prod.keys") && FileExists("sd:/bootloader/payloads/Lockpick_RCM.bin")) {
+		const char *target = "sd:/bootloader/payloads/TegraExplorer.bin";
+		sd_save_to_file((void*)target, strlen(target), "sd:/config/autokeys_target.txt");
+		launch_payload("sd:/bootloader/payloads/Lockpick_RCM.bin");
+	}
 	
 	if (FileExists("sd:/kefir/switch/kefir-updater/update.te"))
 		RunScript("sd:/kefir/switch/kefir-updater", newFSEntry("update.te"));
