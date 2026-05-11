@@ -128,23 +128,26 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
                     last_update_ms = now;
                     gfx_con_setpos(x, y);
 
-                    char fname_line[77];
+                    u32 limit = (YLEFT - x) / 16 - 10;
+                    char fname_line[128];
                     u32 flen = strlen(fs[i].name);
-                    if (flen >= 76) {
-                        memcpy(fname_line, fs[i].name, 73);
-                        fname_line[73] = '.'; fname_line[74] = '.'; fname_line[75] = '.';
+                    if (flen >= limit) {
+                        memcpy(fname_line, fs[i].name, limit - 3);
+                        fname_line[limit - 3] = '.'; fname_line[limit - 2] = '.'; fname_line[limit - 1] = '.';
                     } else {
                         memcpy(fname_line, fs[i].name, flen);
-                        memset(fname_line + flen, ' ', 76 - flen);
+                        memset(fname_line + flen, ' ', limit - flen);
                     }
-                    fname_line[76] = 0;
+                    fname_line[limit] = 0;
                     gfx_puts(fname_line);
-                    gfx_con_setpos(x, y);
                 }
 
                 char *tempDst = CombinePaths(dstPath, fs[i].name);
+                u32 limit = (YLEFT - x) / 16 - 10;
+                gfx_con_setpos(x + limit * 16, y);
                 ret = FileCopy(temp, tempDst, COPY_MODE_PRINT);
                 free(tempDst);
+                gfx_con_setpos(x, y);
             }
             free(temp);
         }
@@ -190,16 +193,17 @@ ErrCode_t FolderDelete(const char *path){
                     last_update_ms = now;
                     gfx_con_setpos(x, y);
 
-                    char fname_line[77];
+                    u32 limit = (YLEFT - x) / 16 - 1;
+                    char fname_line[128];
                     u32 flen = strlen(fs[i].name);
-                    if (flen >= 76) {
-                        memcpy(fname_line, fs[i].name, 73);
-                        fname_line[73] = '.'; fname_line[74] = '.'; fname_line[75] = '.';
+                    if (flen >= limit) {
+                        memcpy(fname_line, fs[i].name, limit - 3);
+                        fname_line[limit - 3] = '.'; fname_line[limit - 2] = '.'; fname_line[limit - 1] = '.';
                     } else {
                         memcpy(fname_line, fs[i].name, flen);
-                        memset(fname_line + flen, ' ', 76 - flen);
+                        memset(fname_line + flen, ' ', limit - flen);
                     }
-                    fname_line[76] = 0;
+                    fname_line[limit] = 0;
                     gfx_puts(fname_line);
                     gfx_con_setpos(x, y);
                 }

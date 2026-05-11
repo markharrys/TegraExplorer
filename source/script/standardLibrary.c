@@ -296,7 +296,26 @@ ClassFunction(stdPause){
 
 // Takes [str, str]. Returns int (0=success). 0: src path, 1: dst path
 ClassFunction(stdFileCopy){
+	u32 x, y;
+	gfx_con_getpos(&x, &y);
+	u32 limit = (YLEFT - x) / 16 - 10;
+	char fname_line[128];
+	const char *name = strrchr(args[0]->string.value, '/');
+	name = name ? name + 1 : args[0]->string.value;
+	u32 flen = strlen(name);
+	if (flen >= limit) {
+		memcpy(fname_line, name, limit - 3);
+		fname_line[limit - 3] = '.'; fname_line[limit - 2] = '.'; fname_line[limit - 1] = '.';
+	} else {
+		memcpy(fname_line, name, flen);
+		memset(fname_line + flen, ' ', limit - flen);
+	}
+	fname_line[limit] = 0;
+	gfx_puts(fname_line);
+
+	gfx_con_setpos(x + limit * 16, y);
 	ErrCode_t e = FileCopy(args[0]->string.value, args[1]->string.value, COPY_MODE_PRINT);
+	gfx_con_setpos(x, y);
 	return newIntVariablePtr(e.err);
 }
 
