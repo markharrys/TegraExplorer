@@ -106,7 +106,6 @@ int launch_payload(char *path)
 		if (f_open(&fp, path, FA_READ))
 		{
 			EPRINTFARGS("Payload file is missing!\n(%s)", path);
-			sd_unmount();
 
 			return 1;
 		}
@@ -126,7 +125,6 @@ int launch_payload(char *path)
 		if (f_read(&fp, buf, size, NULL))
 		{
 			f_close(&fp);
-			sd_unmount();
 
 			return 1;
 		}
