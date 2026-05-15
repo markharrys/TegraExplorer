@@ -85,10 +85,29 @@ ErrCode_t FileCopy(const char *locin, const char *locout, u8 options){
     return err;
 }
 
-void BoxRestOfScreen(){
-    u32 tempX, tempY;
-    gfx_con_getpos(&tempX, &tempY);
-    gfx_boxGrey(tempX, tempY, YLEFT, tempY + 16, 0x1B);
+// Print filename padded with spaces to a fixed width so subsequent shorter
+// names fully overwrite leftover characters (same approach as cpr.c).
+static void _printPaddedName(const char *name, u32 x, u32 y, u32 width){
+    if (width < 4) width = 4;
+    if (width > 255) width = 255;
+
+    char line[256];
+    u32 len = strlen(name);
+
+    gfx_con_setpos(x, y);
+
+    if (len >= width){
+        memcpy(line, name, width - 3);
+        line[width - 3] = '.';
+        line[width - 2] = '.';
+        line[width - 1] = '.';
+    } else {
+        memcpy(line, name, len);
+        memset(line + len, ' ', width - len);
+    }
+    line[width] = 0;
+
+    gfx_puts(line);
 }
 
 ErrCode_t FolderCopy(const char *locin, const char *locout){
@@ -115,14 +134,15 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
         vecDefArray(FSEntry_t *, fs, fileVec);
         f_mkdir(dstPath);
         
+        u32 fname_width = (YLEFT - x) / 16 - 10;
         for (int i = 0; i < fileVec.count && !ret.err; i++){
             char *temp = CombinePaths(locin, fs[i].name);
             if (fs[i].isDir){
                 ret = FolderCopy(temp, dstPath);
+                gfx_con_setpos(x, y);
             }
             else {
-                gfx_puts_limit(fs[i].name, (YLEFT - x) / 16 - 10);
-                BoxRestOfScreen();
+                _printPaddedName(fs[i].name, x, y, fname_width);
 
                 char *tempDst = CombinePaths(dstPath, fs[i].name);
                 ret = FileCopy(temp, tempDst, COPY_MODE_PRINT);
@@ -162,19 +182,20 @@ ErrCode_t FolderDelete(const char *path){
     else {
         vecDefArray(FSEntry_t *, fs, fileVec);
 
+        u32 fname_width = (YLEFT - x) / 16 - 10;
         for (int i = 0; i < fileVec.count && !ret.err; i++){
             char *temp = CombinePaths(path, fs[i].name);
             if (fs[i].isDir){
                 ret = FolderDelete(temp);
+                gfx_con_setpos(x, y);
             }
             else {
-                gfx_puts_limit(fs[i].name, (YLEFT - x) / 16 - 10);
-                BoxRestOfScreen();
+                _printPaddedName(fs[i].name, x, y, fname_width);
                 res = f_unlink(temp);
                 if (res){
                     ret = newErrCode(res);
                 }
-                gfx_con_setpos(x, y);   
+                gfx_con_setpos(x, y);
             }
             free(temp);
         }
