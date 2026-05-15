@@ -54,5 +54,5 @@ bool FileExists(const char* path){
 
     fr = f_stat(path, &fno);
 
-    return (fr == FR_OK);
+    return !(fr & FR_NO_FILE);
 }
