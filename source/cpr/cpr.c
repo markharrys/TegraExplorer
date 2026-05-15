@@ -160,7 +160,7 @@ int _traverse_unified(char *path, TraversalStats *stats, u32 check_first_run)
 
         {
             u32 now = get_tmr_ms();
-            if (now - stats->last_update_ms >= 500) {
+            if (now - stats->last_update_ms >= 256) {
                 stats->last_update_ms = now;
                 u32 current_elapsed = get_tmr_s() - stats->start_time;
                 const char spinner[] = {'|', '/', '-', '\\'};
