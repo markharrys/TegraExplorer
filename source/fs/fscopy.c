@@ -9,8 +9,6 @@
 #include "fsutils.h"
 #include "readers/folderReader.h"
 
-static void BoxRestOfScreen();
-
 ErrCode_t FileCopy(const char *locin, const char *locout, u8 options){
     FIL in, out;
     FILINFO in_info;
@@ -81,7 +79,6 @@ ErrCode_t FileCopy(const char *locin, const char *locout, u8 options){
 
     if (options & COPY_MODE_PRINT){
         gfx_con_setpos(x - 16, y);
-        BoxRestOfScreen();
     }
     
     //f_stat(locin, &in_info); //somehow stops fatfs from being weird
@@ -136,7 +133,6 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
             free(temp);
         }
 
-        BoxRestOfScreen();
     }
 
     FILINFO fno;
@@ -184,7 +180,6 @@ ErrCode_t FolderDelete(const char *path){
             free(temp);
         }
 
-        BoxRestOfScreen();
     }
 
     if (!ret.err){
