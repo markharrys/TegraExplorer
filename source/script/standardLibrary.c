@@ -428,9 +428,14 @@ ClassFunction(stdFileWrite){
 }
 
 extern int launch_payload(char *path);
+extern int launch_payload_with_autokeys_target(char *path, const char *autokeys_target);
 
 ClassFunction(stdLaunchPayload){
 	return newIntVariablePtr(launch_payload(args[0]->string.value));
+}
+
+ClassFunction(stdLaunchPayloadWithTarget){
+	return newIntVariablePtr(launch_payload_with_autokeys_target(args[0]->string.value, args[1]->string.value));
 }
 
 int emmcFile(char *sdFile, char *sysPart, u8 mmc, u8 write){
@@ -549,6 +554,7 @@ STUBBED(stdFileDel)
 STUBBED(stdCopyDir)
 STUBBED(stdFileMove)
 STUBBED(stdLaunchPayload)
+STUBBED(stdLaunchPayloadWithTarget)
 STUBBED(stdFileWrite)
 STUBBED(stdFileRead)
 STUBBED(stdFileReadSize)
@@ -635,6 +641,7 @@ ClassFunctionTableEntry_t standardFunctionDefenitions[] = {
 	// 	Utils
 	{"fsexists", stdFileExists, 1, twoStringArgStd},
 	{"payload", stdLaunchPayload, 1, twoStringArgStd},
+	{"payload", stdLaunchPayloadWithTarget, 2, twoStringArgStd},
 	{"reboot_ofw", stdRebootNormal, 0, 0},
 	{"combinepath", stdCombinePaths, VARARGCOUNT, 0},
 	{"escapepath", stdEscPaths, 1, twoStringArgStd},

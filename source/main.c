@@ -93,6 +93,35 @@ void reloc_patcher(u32 payload_dst, u32 payload_src, u32 payload_size)
 	}
 }
 
+int launch_payload(char *path);
+
+// Writes `target_path` to sd:/config/autokeys_target.txt so that
+// Lockpick_RCM (and compatible payloads) can chain-load that payload after
+// dumping the keys. If the file is missing Lockpick falls back to
+// sd:/bootloader/update.bin.
+static int write_autokeys_target(const char *target_path)
+{
+	if (!target_path || !*target_path)
+		return 1;
+
+	if (!sd_mount())
+		return 1;
+
+	f_mkdir("sd:/config");
+	return sd_save_to_file((void *)target_path, strlen(target_path), "sd:/config/autokeys_target.txt");
+}
+
+// Launches `path` after writing `autokeys_target` to
+// sd:/config/autokeys_target.txt. When `autokeys_target` is NULL or empty
+// the file is left untouched and this behaves like launch_payload.
+int launch_payload_with_autokeys_target(char *path, const char *autokeys_target)
+{
+	if (autokeys_target && *autokeys_target)
+		write_autokeys_target(autokeys_target);
+
+	return launch_payload(path);
+}
+
 int launch_payload(char *path)
 {
 	gfx_clear_grey(0x1B);
@@ -286,12 +315,12 @@ void ipl_main()
 	TConf.keysDumped = (res > 0) ? 0 : 1;
 	
 	if (res > 0)
-	launch_payload("sd:/switch/kefir-updater/lockpick_auto.bin");
+	launch_payload_with_autokeys_target("sd:/bootloader/payloads/Lockpick_RCM.bin", "sd:/bootloader/payloads/TegraExplorer.bin");
 	
 	if (TConf.keysDumped)
 	SetKeySlots();
 	
-	if (!FileExists("sd:/switch/prod.keys") && FileExists("sd:/switch/kefir-updater/lockpick_auto.bin")) launch_payload("sd:/switch/kefir-updater/lockpick_auto.bin");
+	if (!FileExists("sd:/switch/prod.keys") && FileExists("sd:/bootloader/payloads/Lockpick_RCM.bin")) launch_payload_with_autokeys_target("sd:/bootloader/payloads/Lockpick_RCM.bin", "sd:/bootloader/payloads/TegraExplorer.bin");
 	
 	if (FileExists("sd:/kefir/switch/kefir-updater/update.te"))
 		RunScript("sd:/kefir/switch/kefir-updater", newFSEntry("update.te"));
