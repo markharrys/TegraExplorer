@@ -285,7 +285,7 @@ void ipl_main()
 	
 	TConf.keysDumped = (res > 0) ? 0 : 1;
 	
-	if (res > 0) {
+	if (res > 0 && FileExists("sd:/bootloader/payloads/Lockpick_RCM.bin")) {
 		const char *target = "sd:/bootloader/payloads/TegraExplorer.bin";
 		sd_save_to_file((void*)target, strlen(target), "sd:/config/autokeys_target.txt");
 		launch_payload("sd:/bootloader/payloads/Lockpick_RCM.bin");

@@ -16,7 +16,7 @@ if (fsexists("sd:/switch/prod.keys")) {
 	a=0 fwstr()}
 	if(mountsys("SYSTEM")){print("SYSTEM MOUNT FAIL")pe()}
 	fv()
-}.else(){payload("sd:/bootloader/payloads/Lockpick_RCM.bin")}
+}.else(){if(fsexists("sd:/bootloader/payloads/Lockpick_RCM.bin")){payload("sd:/bootloader/payloads/Lockpick_RCM.bin")}.else(){print("Lockpick_RCM.bin not found")pe()}}
 
 fv()
 sysfw=fw
