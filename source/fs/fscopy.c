@@ -9,6 +9,8 @@
 #include "fsutils.h"
 #include "readers/folderReader.h"
 
+static void BoxRestOfScreen();
+
 ErrCode_t FileCopy(const char *locin, const char *locout, u8 options){
     FIL in, out;
     FILINFO in_info;
@@ -79,13 +81,14 @@ ErrCode_t FileCopy(const char *locin, const char *locout, u8 options){
 
     if (options & COPY_MODE_PRINT){
         gfx_con_setpos(x - 16, y);
+        BoxRestOfScreen();
     }
     
     //f_stat(locin, &in_info); //somehow stops fatfs from being weird
     return err;
 }
 
-void BoxRestOfScreen(){
+static void BoxRestOfScreen(){
     u32 tempX, tempY;
     gfx_con_getpos(&tempX, &tempY);
     gfx_boxGrey(tempX, tempY, YLEFT, tempY + 16, 0x1B);
@@ -121,8 +124,8 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
                 ret = FolderCopy(temp, dstPath);
             }
             else {
-                gfx_puts_limit(fs[i].name, (YLEFT - x) / 16 - 10);
                 BoxRestOfScreen();
+                gfx_puts_limit(fs[i].name, (YLEFT - x) / 16 - 10);
 
                 char *tempDst = CombinePaths(dstPath, fs[i].name);
                 ret = FileCopy(temp, tempDst, COPY_MODE_PRINT);
@@ -132,6 +135,8 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
             }
             free(temp);
         }
+
+        BoxRestOfScreen();
     }
 
     FILINFO fno;
@@ -168,8 +173,8 @@ ErrCode_t FolderDelete(const char *path){
                 ret = FolderDelete(temp);
             }
             else {
-                gfx_puts_limit(fs[i].name, (YLEFT - x) / 16 - 10);
                 BoxRestOfScreen();
+                gfx_puts_limit(fs[i].name, (YLEFT - x) / 16 - 10);
                 res = f_unlink(temp);
                 if (res){
                     ret = newErrCode(res);
@@ -178,6 +183,8 @@ ErrCode_t FolderDelete(const char *path){
             }
             free(temp);
         }
+
+        BoxRestOfScreen();
     }
 
     if (!ret.err){
