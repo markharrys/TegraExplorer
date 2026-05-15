@@ -137,13 +137,7 @@ static void _sd_deinit();
 bool sd_mount()
 {
 	if (sd_mounted)
-	{
-		if (sd_fs.fs_type != 0)
-			return true;
-
-		// FatFS state inconsistent with sd_mounted flag — force re-mount
-		_sd_deinit();
-	}
+		return true;
 
 	int res = !sd_initialize(false);
 	is_sd_inited = !res;
