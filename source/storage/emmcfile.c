@@ -67,8 +67,6 @@ ErrCode_t EmmcDumpToFile(const char *path, u32 lba_start, u32 lba_end, u8 force,
         gfx_con_setpos(x, y);
     }
 
-    gfx_boxGrey(x, y, YLEFT, y + 16, 0x1B);
-
     f_close(&fp);
     free(buff);
     return err;
@@ -127,8 +125,6 @@ ErrCode_t EmmcRestoreFromFile(const char *path, u32 lba_start, u32 lba_end, u8 f
         gfx_printf("[%3d%%]", percent);
         gfx_con_setpos(x, y);
     }
-
-    gfx_boxGrey(x, y, YLEFT, y + 16, 0x1B);
 
     f_close(&fp);
     free(buff);
