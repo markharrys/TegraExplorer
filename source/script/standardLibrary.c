@@ -299,6 +299,7 @@ ClassFunction(stdFileCopy){
 	u32 x, y;
 	gfx_con_getpos(&x, &y);
 	u32 limit = (YLEFT - x) / 16 - 10;
+	if (limit > 127) limit = 127;
 	char fname_line[128];
 	const char *name = strrchr(args[0]->string.value, '/');
 	name = name ? name + 1 : args[0]->string.value;

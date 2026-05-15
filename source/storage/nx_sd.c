@@ -132,10 +132,18 @@ bool sd_initialize(bool power_cycle)
 
 bool is_sd_inited = false;
 
+static void _sd_deinit();
+
 bool sd_mount()
 {
 	if (sd_mounted)
-		return true;
+	{
+		if (sd_fs.fs_type != 0)
+			return true;
+
+		// FatFS state inconsistent with sd_mounted flag — force re-mount
+		_sd_deinit();
+	}
 
 	int res = !sd_initialize(false);
 	is_sd_inited = !res;
