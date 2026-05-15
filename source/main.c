@@ -285,6 +285,7 @@ void ipl_main()
 	
 	if (res > 0 && FileExists("sd:/bootloader/payloads/Lockpick_RCM.bin")) {
 		const char *target = "sd:/bootloader/payloads/TegraExplorer.bin";
+		f_mkdir("sd:/config");
 		sd_save_to_file((void*)target, strlen(target), "sd:/config/autokeys_target.txt");
 		launch_payload("sd:/bootloader/payloads/Lockpick_RCM.bin");
 	}
@@ -294,6 +295,7 @@ void ipl_main()
 	
 	if (!FileExists("sd:/switch/prod.keys") && FileExists("sd:/bootloader/payloads/Lockpick_RCM.bin")) {
 		const char *target = "sd:/bootloader/payloads/TegraExplorer.bin";
+		f_mkdir("sd:/config");
 		sd_save_to_file((void*)target, strlen(target), "sd:/config/autokeys_target.txt");
 		launch_payload("sd:/bootloader/payloads/Lockpick_RCM.bin");
 	}

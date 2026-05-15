@@ -129,6 +129,7 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
                     gfx_con_setpos(x, y);
 
                     u32 limit = (YLEFT - x) / 16 - 10;
+                    if (limit > 127) limit = 127;
                     char fname_line[128];
                     u32 flen = strlen(fs[i].name);
                     if (flen >= limit) {
@@ -144,6 +145,7 @@ ErrCode_t FolderCopy(const char *locin, const char *locout){
 
                 char *tempDst = CombinePaths(dstPath, fs[i].name);
                 u32 limit = (YLEFT - x) / 16 - 10;
+                if (limit > 127) limit = 127;
                 gfx_con_setpos(x + limit * 16, y);
                 ret = FileCopy(temp, tempDst, COPY_MODE_PRINT);
                 free(tempDst);
@@ -194,6 +196,7 @@ ErrCode_t FolderDelete(const char *path){
                     gfx_con_setpos(x, y);
 
                     u32 limit = (YLEFT - x) / 16 - 1;
+                    if (limit > 127) limit = 127;
                     char fname_line[128];
                     u32 flen = strlen(fs[i].name);
                     if (flen >= limit) {
