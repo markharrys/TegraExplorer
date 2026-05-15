@@ -296,7 +296,27 @@ ClassFunction(stdPause){
 
 // Takes [str, str]. Returns int (0=success). 0: src path, 1: dst path
 ClassFunction(stdFileCopy){
+	u32 x, y;
+	gfx_con_getpos(&x, &y);
+	u32 limit = (YLEFT - x) / 16 - 10;
+	if (limit > 127) limit = 127;
+	char fname_line[128];
+	const char *name = strrchr(args[0]->string.value, '/');
+	name = name ? name + 1 : args[0]->string.value;
+	u32 flen = strlen(name);
+	if (flen >= limit) {
+		memcpy(fname_line, name, limit - 3);
+		fname_line[limit - 3] = '.'; fname_line[limit - 2] = '.'; fname_line[limit - 1] = '.';
+	} else {
+		memcpy(fname_line, name, flen);
+		memset(fname_line + flen, ' ', limit - flen);
+	}
+	fname_line[limit] = 0;
+	gfx_puts(fname_line);
+
+	gfx_con_setpos(x + limit * 16, y);
 	ErrCode_t e = FileCopy(args[0]->string.value, args[1]->string.value, COPY_MODE_PRINT);
+	gfx_con_setpos(x, y);
 	return newIntVariablePtr(e.err);
 }
 
@@ -427,6 +447,10 @@ ClassFunction(stdFileWrite){
 	return newIntVariablePtr(sd_save_to_file(args[1]->solvedArray.vector.data, args[1]->solvedArray.vector.count, args[0]->string.value));	
 }
 
+ClassFunction(stdFileWriteStr){
+	return newIntVariablePtr(sd_save_to_file(args[1]->string.value, strlen(args[1]->string.value), args[0]->string.value));
+}
+
 extern int launch_payload(char *path);
 
 ClassFunction(stdLaunchPayload){
@@ -550,6 +574,7 @@ STUBBED(stdCopyDir)
 STUBBED(stdFileMove)
 STUBBED(stdLaunchPayload)
 STUBBED(stdFileWrite)
+STUBBED(stdFileWriteStr)
 STUBBED(stdFileRead)
 STUBBED(stdFileReadSize)
 STUBBED(stdCombinePaths)
@@ -631,6 +656,7 @@ ClassFunctionTableEntry_t standardFunctionDefenitions[] = {
 	{"readfile", stdFileRead, 1, twoStringArgStd},
 	{"getfilesize", stdFileReadSize, 1, twoStringArgStd},
 	{"writefile", stdFileWrite, 2, oneStringOneByteArrayStd},
+	{"writestr", stdFileWriteStr, 2, twoStringArgStd},
 	
 	// 	Utils
 	{"fsexists", stdFileExists, 1, twoStringArgStd},
